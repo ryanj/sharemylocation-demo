@@ -9,7 +9,9 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -21,6 +23,7 @@ import com.google.code.geocoder.model.LatLng;
 import com.sharemylocation.converters.StatusConverter;
 import com.sharemylocation.dao.ApplicationDao;
 import com.sharemylocation.domain.Status;
+import com.sharemylocation.domain.StatusWithDistance;
 import com.twitter.Extractor;
 
 @Path("/statuses")
@@ -59,6 +62,26 @@ public class StatusResource {
     @Produces(value = MediaType.APPLICATION_JSON)
     public List<Status> allStatuses() {
         return dao.findAll(converter);
+    }
+    
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Path("/{lng}/{lat}")
+    public List<Status> findNear(@PathParam("lng") double lng, @PathParam("lat") double lat,
+            @QueryParam("hashtags") String hashtagStr, @QueryParam("user") String user) {
+
+        String[] hashtags = (hashtagStr == null || hashtagStr == "") ? null : hashtagStr.split(",");
+        return dao.findNear(hashtags, user, new double[] { lng, lat }, converter);
+    }
+
+    @GET
+    @Produces(value = MediaType.APPLICATION_JSON)
+    @Path("/geonear/{lng}/{lat}")
+    public List<StatusWithDistance> findGeoNear(@PathParam("lng") double lng, @PathParam("lat") double lat,
+            @QueryParam("hashtags") String hashtagStr, @QueryParam("user") String user) {
+
+        String[] hashtags = (hashtagStr == null || hashtagStr == "") ? null : hashtagStr.split(",");
+        return dao.findGeoNear(hashtags, new double[] { lng, lat }, converter);
     }
 
 }

@@ -66,6 +66,61 @@ body {
 		
 	</script>
 
+	<script type="text/template" id="status-geonear-list-template">
+			<% _.each(statuses , function(statusWithDistance) {%>
+				<div class="list-group">		
+					<a href="#statuses/<%= statusWithDistance.attributes.status.id %>" class="list-group-item active">
+    					<h4 class="list-group-item-heading"><%= statusWithDistance.attributes.status.status %></h4>
+						<h6><%= statusWithDistance.attributes.distance %>Km(s)</h6>
+    					<p class="list-group-item-text">
+							By <%= statusWithDistance.attributes.status.postedBy %> at <%= statusWithDistance.attributes.status.address %>
+							<% _.each(statusWithDistance.attributes.status.hashTags , function(hashTag) {%>
+								<span class="label label-default"><%= hashTag %></span>
+							<%});%>
+						<span class="text-right"><%= $.timeago(statusWithDistance.attributes.status.postedOn)%></span>
+						</p>
+						
+						
+  					</a>
+				</div>
+			<%});%>
+		
+	</script>
+
+	<script type="text/template" id="search-status-template">
+		<form id="searchForm" class="form-horizontal" role="form">
+				<div class="form-group">
+					<div class="col-lg-10">
+						<textarea id="hashtags" name="status" class="form-control" placeholder="Comma seperated list of hashtags"></textarea>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-lg-10">
+						<input type="text" class="form-control" id="postedBy"
+							placeholder="User name">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-lg-offset-2 col-lg-10">
+						<div class="checkbox">
+							<label> <input id="useGeoNear" name="useGeoNear" type="checkbox"> Use GeoNear Search Functionality
+							</label>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-lg-offset-2 col-lg-10">
+						<button type="submit" class="btn btn-primary btn-lg">Search Status</button>
+					</div>
+				</div>
+			</form>
+
+			
+			<div id="results">
+				
+			</div>
+	</script>
+	
 	<script type="text/template" id="status-post-template">
 		<form id="postForm" class="form-horizontal" role="form">
 				<div class="form-group">

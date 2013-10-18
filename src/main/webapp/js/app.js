@@ -4,8 +4,70 @@ var Status = Backbone.Model.extend({
 var Statuses = Backbone.Collection.extend({
 	url : "/api/v1/statuses"
 });
+var SearchResultCollection = Backbone.Collection.extend({
+	url : function(){
+		return "/api/v1/statuses/" + this.searchQuery;
+	}
+});
 
 
+
+var SearchView = Backbone.View.extend({
+	el : ".page",
+	
+	events : {
+		"submit #searchForm" : "searchStatus"
+	},
+	
+	searchStatus : function(event){
+		event.preventDefault();
+		console.log("In searchStatus()... ");
+		$("#results").empty();
+		$("#searchForm").mask("Searching statuses ...");
+		var hashtags = $("textarea#hashtags").val();
+		var postedBy = $("#postedBy").val();
+		var useGeoNear = $('#useGeoNear').is(":checked") ? true : false;
+		
+		var options = {
+				hashtags : hashtags,
+				postedBy : postedBy,
+				useGeoNear : useGeoNear,
+				formName : "#searchForm"
+		};
+		
+		getCurrentPosition(searchViewCallback ,options);
+		
+	},
+	
+	render : function(){
+		var template = _.template($("#search-status-template").html() , {});
+		this.$el.html(template);
+	}
+
+});
+
+function searchViewCallback(latitude , longitude , options){
+	var searchResults = new SearchResultCollection();
+	var query = longitude + "/" +latitude + "/?"+ "hashtags="+options.hashtags+"&user="+options.postedBy;
+	if(options.useGeoNear){
+		query = "geonear/" + query;
+	}
+	console.log("Search Query : "+query);
+	searchResults.searchQuery = query;
+	var that = this;
+	searchResults.fetch({
+		success : function(statuses) {
+			var template = options.useGeoNear ? _.template($("#status-geonear-list-template").html(), {statuses : statuses.models}) : _.template($("#status-list-template").html(), {statuses : statuses.models});
+			$("#results").append("<hr><h2>Search Results</h2><hr>");
+			$("#results").append(template);
+			$("#searchForm").unmask();
+			$("#searchForm")[0].reset();
+		}, error : function(){
+			console.log("Error in getting search results...");
+			$("#searchForm").unmask();
+		}
+	});
+}
 
 var PostView = Backbone.View.extend({
 	el : ".page",
@@ -128,7 +190,8 @@ var HomeView = Backbone.View.extend({
 var Router = Backbone.Router.extend({
 	routes : {
 		"" : "home",
-		"post" : "post"
+		"post" : "post",
+		"search" : "search"
 	},
 
 });
@@ -136,6 +199,7 @@ var Router = Backbone.Router.extend({
 
 var homeView = new HomeView();
 var postView = new PostView();
+var searchView = new SearchView();
 
 var app = new Router();
 
@@ -149,4 +213,8 @@ app.on("route:post", function(){
 	postView.render();
 });
 
+app.on("route:search", function(){
+	console.log("Show search page");
+	searchView.render();
+});
 Backbone.history.start();

@@ -9,12 +9,16 @@ import javax.inject.Inject;
 
 import org.bson.types.ObjectId;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.sharemylocation.converters.Converter;
+import com.sharemylocation.domain.Status;
+import com.sharemylocation.domain.StatusWithDistance;
 
 public class ApplicationDao {
 
@@ -47,6 +51,66 @@ public class ApplicationDao {
             list.add(converter.fromMongo(iterator.next()));
         }
         return list;
+    }
+    
+    public <T> List<T> findNear(String[] hashTags, String postedBy, double[] lngLat, Converter<T> converter) {
+        DBCollection statusCollection = db.getCollection("statuses");
+        BasicDBObject cmd = new BasicDBObject();
+
+        BasicDBObject query = new BasicDBObject();
+
+        BasicDBObject geometryObj = new BasicDBObject("type", "Point");
+        geometryObj.append("coordinates", lngLat);
+        BasicDBObject geometryQuery = new BasicDBObject("$geometry", geometryObj);
+        query.append("$near", geometryQuery);
+        cmd.append("location", query);
+
+        if (hashTags != null && hashTags.length >0) {
+            cmd.append("hashTags", new BasicDBObject("$in", hashTags));
+        }
+
+        if (postedBy != null && postedBy != "") {
+            cmd.put("postedBy", postedBy);
+        }
+
+        logger.info("Near query : \n" + cmd.toString());
+
+        DBCursor dbCursor = statusCollection.find(cmd);
+        return toList(dbCursor, converter);
+    }
+
+    public List<StatusWithDistance> findGeoNear(String[] hashTags, double[] lngLat, Converter<Status> converter) {
+        BasicDBObject cmd = new BasicDBObject();
+        cmd.put("geoNear", "statuses");
+        cmd.put("near", lngLat);
+        cmd.put("spherical", true);
+        cmd.put("num", 10);
+        if (hashTags != null && hashTags.length >0) {
+            BasicDBObject hashTagQuery = new BasicDBObject();
+            hashTagQuery.put("hashTags", new BasicDBObject("$in", hashTags));
+            cmd.put("query", hashTagQuery);
+        }
+
+        cmd.put("distanceMultiplier", 6371);
+
+        logger.info("GeoNear Query  \n" + cmd.toString());
+        CommandResult commandResult = db.command(cmd);
+
+        BasicDBList results = (BasicDBList) commandResult.get("results");
+        List<StatusWithDistance> statuses = new ArrayList<>();
+        if (results == null) {
+            return statuses;
+        }
+
+        for (Object obj : results) {
+            BasicDBObject obj2 = (BasicDBObject) obj;
+            DBObject result = ((BasicDBObject) obj2.get("obj"));
+            Status status = converter.fromMongo(result);
+            StatusWithDistance statusWithDistance = new StatusWithDistance(status, obj2.getDouble("dis"));
+            statuses.add(statusWithDistance);
+        }
+
+        return statuses;
     }
 
     
