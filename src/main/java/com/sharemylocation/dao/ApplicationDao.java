@@ -1,6 +1,7 @@
 package com.sharemylocation.dao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -64,11 +65,13 @@ public class ApplicationDao {
         BasicDBObject geometryQuery = new BasicDBObject("$geometry", geometryObj);
         query.append("$near", geometryQuery);
         cmd.append("location", query);
-
+        hashTags = removeEmptyOrNullElements(hashTags);
+        logger.info("hashtags"+hashTags);
         if (hashTags != null && hashTags.length >0) {
             cmd.append("hashTags", new BasicDBObject("$in", hashTags));
         }
 
+        logger.info("Postedby "+postedBy.length());
         if (postedBy != null && postedBy != "") {
             cmd.put("postedBy", postedBy);
         }
@@ -85,6 +88,7 @@ public class ApplicationDao {
         cmd.put("near", lngLat);
         cmd.put("spherical", true);
         cmd.put("num", 10);
+        hashTags = removeEmptyOrNullElements(hashTags);
         if (hashTags != null && hashTags.length >0) {
             BasicDBObject hashTagQuery = new BasicDBObject();
             hashTagQuery.put("hashTags", new BasicDBObject("$in", hashTags));
@@ -112,6 +116,22 @@ public class ApplicationDao {
 
         return statuses;
     }
+    
+    private String[] removeEmptyOrNullElements(String[] arr){
+        if(arr == null){
+            return null;
+        }
+        
+        List<String> strs = new ArrayList<>();
+        for (String str : arr) {
+            strs.add(str);
+        }
+        
+        strs.removeAll(Arrays.asList("",null));
+        
+        return strs.toArray(new String[0]);
+    }
+    
 
     
 }
