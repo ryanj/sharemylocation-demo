@@ -14,7 +14,7 @@ $ rhc create-app sharemylocation jbosseap mongodb-2
 
 4. Pull the source code from github
 ```
-$ git remote add upstream -m master https://github.com/shekhargulati/sharemylocation.git
+$ git remote add upstream -m master https://github.com/shekhargulati/sharemylocation-demo.git
 $ git pull -s recursive -X theirs upstream master
 ```
 
