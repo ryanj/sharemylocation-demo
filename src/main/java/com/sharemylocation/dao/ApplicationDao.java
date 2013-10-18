@@ -72,7 +72,7 @@ public class ApplicationDao {
         }
 
         logger.info("Postedby "+postedBy.length());
-        if (postedBy != null && postedBy != "") {
+        if (postedBy != null && postedBy.length() > 0) {
             cmd.put("postedBy", postedBy);
         }
 
